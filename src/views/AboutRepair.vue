@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { getPrice, getPrices, type PriceResult } from '@/api/partPriceApi.ts'
+import { getPartByIdentifiers, getPrice, getPrices, type PriceResult } from '@/api/partPriceApi.ts'
 import { appleDevice } from '@/data/appleDevice'
 import { oppoDevice } from '@/data/oppoDevice'
 import { samsungDevice } from '@/data/samsungDevice'
@@ -87,9 +87,12 @@ async function handleBulkLookup() {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   handleSingleLookup()
   handleBulkLookup()
+  //testing 
+  const part = await getPartByIdentifiers(2,1,3)
+  console.log(part)
 })
 </script>
 <template>
