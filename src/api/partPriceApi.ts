@@ -1,4 +1,4 @@
-import type { AxiosResponse } from 'axios'
+import axios from 'axios'
 import { apiClient } from './apiClient'
 
 export type PriceResult = {
@@ -68,13 +68,8 @@ export type Profile = {
 
 /* Authentication */
 
-export async function login(
-  credentials: LoginInput,
-): Promise<LoginResponse> {
-  const { data } = await apiClient.post<LoginResponse>(
-    '/auth/login',
-    credentials,
-  )
+export async function login(credentials: LoginInput): Promise<LoginResponse> {
+  const { data } = await apiClient.post<LoginResponse>('/auth/login', credentials)
 
   return data
 }
@@ -100,28 +95,27 @@ export async function getPartByIdentifiers(
   modelId: number,
   brandId: number,
   partId: number,
-): Promise<Part> {
-  const { data } = await apiClient.get<Part>(
-    `/parts/by-ids/${modelId}/${brandId}/${partId}`,
-  )
+): Promise<Part | null> {
+  try {
+    const { data } = await apiClient.get<Part>(`/parts/by-ids/${modelId}/${brandId}/${partId}`)
 
-  return data
+    return data
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 404) {
+      return null
+    }
+
+    throw error
+  }
 }
 
-export async function createPart(
-  part: CreatePartInput,
-): Promise<Part> {
+export async function createPart(part: CreatePartInput): Promise<Part> {
   const { data } = await apiClient.post<Part>('/parts', part)
   return data
 }
 
-export async function updatePartQuantity(
-  input: UpdatePartQuantityInput,
-): Promise<Part> {
-  const { data } = await apiClient.patch<Part>(
-    '/parts/update-quantity',
-    input,
-  )
+export async function updatePartQuantity(input: UpdatePartQuantityInput): Promise<Part> {
+  const { data } = await apiClient.patch<Part>('/parts/update-quantity', input)
 
   return data
 }
@@ -149,20 +143,13 @@ export async function getPrice(url: string): Promise<PriceResult> {
   return data
 }
 
-export async function getPrices(
-  urls: string[],
-): Promise<PriceResult[]> {
-  const { data } = await apiClient.post<PriceResult[]>(
-    '/api/price/bulk',
-    { urls },
-  )
+export async function getPrices(urls: string[]): Promise<PriceResult[]> {
+  const { data } = await apiClient.post<PriceResult[]>('/api/price/bulk', { urls })
 
   return data
 }
 
-export async function scrapeParts(
-  url?: string,
-): Promise<{ count: number; parts: ScrapedPart[] }> {
+export async function scrapeParts(url?: string): Promise<{ count: number; parts: ScrapedPart[] }> {
   const { data } = await apiClient.get<{
     count: number
     parts: ScrapedPart[]

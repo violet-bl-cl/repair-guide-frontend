@@ -26,12 +26,22 @@
 import jsQR from 'jsqr'
 import { onBeforeUnmount, ref, type Ref } from 'vue'
 
+//exmaple code numbers 2026-01-041-001
+
 const videoEl: Ref<HTMLVideoElement | null> = ref(null)
 const isScanning = ref(false)
 const isHit = ref(false)
 const statusText = ref('Tap "Start camera" to begin.')
 const statusClass = ref<'' | 'live' | 'err'>('')
 const lastValue = ref('')
+export type ScannedCode = {
+  date: string
+  brandId: string
+  modelId: string
+  partId: string
+}
+
+const scannedCode = ref<ScannedCode | null>(null)
 
 let stream: MediaStream | null = null
 let rafId: number | null = null
@@ -41,8 +51,23 @@ let lastHitTime = 0
 
 // Emits the scanned value to the parent component every time a NEW code is read
 const emit = defineEmits<{
-  scan: [value: string]
+  scan: [value: string, parsed: ScannedCode]
 }>()
+
+function parseScannedCode(value: string): ScannedCode | null {
+  const parts = value.split('-')
+  if (parts.length !== 4 || parts.some((part) => !/^\d+$/.test(part))) return null
+
+  const [date, brandId, modelId, partId] = parts as [string, string, string, string]
+  const removeLeadingZeros = (part: string): string => part.replace(/^0+/, '') || '0'
+
+  return {
+    date: removeLeadingZeros(date),
+    brandId: removeLeadingZeros(brandId),
+    modelId: removeLeadingZeros(modelId),
+    partId: removeLeadingZeros(partId),
+  }
+}
 
 function setStatus(text: string, cls: '' | 'live' | 'err' = '') {
   statusText.value = text
@@ -111,11 +136,25 @@ function tick(): void {
     if (code?.data) {
       isHit.value = true
       lastHitTime = now
-      if (code.data !== lastValue.value) {
-        lastValue.value = code.data
-        console.log('QR code scanned:', code.data)
-        emit('scan', code.data)
-        setStatus('Scanned ✓', 'live')
+      const parsedCode = parseScannedCode(code.data)
+      if (!parsedCode) {
+        scannedCode.value = null
+        setStatus('Invalid code format. Expected date-brandId-modelId-partId.', 'err')
+      } else {
+        const normalizedValue = [
+          parsedCode.date,
+          parsedCode.brandId,
+          parsedCode.modelId,
+          parsedCode.partId,
+        ].join('-')
+
+        if (normalizedValue !== lastValue.value) {
+          lastValue.value = normalizedValue
+          scannedCode.value = parsedCode
+          console.log('QR code scanned:', normalizedValue)
+          emit('scan', normalizedValue, parsedCode)
+          setStatus('Scanned ✓', 'live')
+        }
       }
     } else if (now - lastHitTime > 400) {
       isHit.value = false
@@ -127,7 +166,7 @@ function tick(): void {
 
 onBeforeUnmount(stop)
 
-defineExpose({ start, stop })
+defineExpose({ start, stop, scannedCode })
 </script>
 
 <style scoped>
