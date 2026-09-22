@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import AboutRepair from '../views/AboutRepair.vue'
+import DeviceScanner from '../views/DeviceScan.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -8,6 +9,11 @@ const router = createRouter({
       path: '/',
       name: 'repair',
       component: AboutRepair,
+    },
+    {
+      path: '/scan',
+      name: 'device-scanner',
+      component: DeviceScanner,
     },
     // {
     //   path: '/about',

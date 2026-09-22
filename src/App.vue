@@ -1,9 +1,7 @@
-<script setup lang="ts">
-import AboutRepair from './views/AboutRepair.vue'
-</script>
+<script setup lang="ts"></script>
 
 <template>
-  <AboutRepair />
+  <RouterView />
 </template>
 
 <style scoped></style>
