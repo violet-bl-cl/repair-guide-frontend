@@ -1,13 +1,26 @@
 <script setup lang="ts">
-import { createPart, getPartByIdentifiers, updatePartQuantity, type Part } from '@/api/partPriceApi'
+import {
+  createPart,
+  exportParts,
+  getPartByIdentifiers,
+  updatePartQuantity,
+  type Part,
+} from '@/api/partPriceApi'
 import QRScanner, { type ScannedCode } from '@/components/QRScanner.vue'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 const scannedPart = ref<Part | null>(null)
 const scannedCode = ref<ScannedCode | null>(null)
 const isLoading = ref(false)
 const errorMessage = ref('')
 const resultMessage = ref('')
+const isExporting = ref(false)
+
+const exportDate = computed(() => {
+  return scannedCode.value?.date || new Date().toISOString().slice(0, 10)
+})
+
+const exportFileName = computed(() => `century-part-lists-${exportDate.value}.xlsx`)
 
 async function handleScan(_value: string, code: ScannedCode): Promise<void> {
   if (isLoading.value) return
@@ -70,11 +83,38 @@ async function changeQuantity(amount: number): Promise<void> {
     isLoading.value = false
   }
 }
+
+async function handleExport(): Promise<void> {
+  if (isExporting.value) return
+
+  isExporting.value = true
+  errorMessage.value = ''
+
+  try {
+    const file = await exportParts()
+    const downloadUrl = URL.createObjectURL(file)
+    const link = document.createElement('a')
+    link.href = downloadUrl
+    link.download = exportFileName.value
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(downloadUrl)
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : 'Unable to export parts.'
+  } finally {
+    isExporting.value = false
+  }
+}
 </script>
 
 <template>
   <div class="device-scan">
     <QRScanner @scan="handleScan" />
+
+    <button class="export-button" :disabled="isExporting" @click="handleExport">
+      {{ isExporting ? 'Exporting...' : `Export ${exportFileName}` }}
+    </button>
 
     <section v-if="scannedCode" class="part-result">
       <p class="code">
@@ -111,6 +151,22 @@ async function changeQuantity(amount: number): Promise<void> {
   padding: 14px;
   border: 1px solid #e5e7eb;
   border-radius: 10px;
+}
+
+.export-button {
+  width: 100%;
+  margin-top: 16px;
+  padding: 10px 12px;
+  border: 1px solid #2563eb;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #fff;
+  cursor: pointer;
+}
+
+.export-button:disabled {
+  cursor: wait;
+  opacity: 0.7;
 }
 
 .code {
