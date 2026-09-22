@@ -4,7 +4,7 @@ import { appleDevice } from '@/data/appleDevice'
 import { oppoDevice } from '@/data/oppoDevice'
 import { samsungDevice } from '@/data/samsungDevice'
 import type { DeviceModel } from '@/types/repairGuide'
-import { TabletSmartphone } from '@lucide/vue'
+import { ScanLine, TabletSmartphone } from '@lucide/vue'
 import { computed, onMounted, ref } from 'vue'
 import AppleIcon from './../components/icons/AppleIcon.vue'
 import PriceList from './../components/PriceList.vue'
@@ -90,8 +90,8 @@ async function handleBulkLookup() {
 onMounted(async () => {
   handleSingleLookup()
   handleBulkLookup()
-  //testing 
-  const part = await getPartByIdentifiers(2,1,3)
+  //testing
+  const part = await getPartByIdentifiers(2, 1, 3)
   console.log(part)
 })
 </script>
@@ -107,6 +107,14 @@ onMounted(async () => {
         />
       </div>
       <div class="flex-end flex gap-0.5">
+        <RouterLink
+          to="/scan"
+          aria-label="Open QR scanner"
+          title="Open QR scanner"
+          class="bg-[#16a34a] hover:bg-[#15803d] w-10 h-10 flex justify-center rounded items-center cursor-pointer"
+        >
+          <ScanLine :size="20" color="white" />
+        </RouterLink>
         <div
           :style="{ backgroundColor: tabIndex === 0 ? '#b3b3b3' : '#ffffff' }"
           class="bg-[#ffffff] hover:bg-[#4c4c4c] w-10 h-10 flex justify-center rounded items-center cursor-pointer select-none"
