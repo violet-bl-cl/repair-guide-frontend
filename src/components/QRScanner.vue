@@ -59,10 +59,10 @@ function parseScannedCode(value: string): ScannedCode | null {
   if (parts.length !== 4 || parts.some((part) => !/^\d+$/.test(part))) return null
 
   const [date, brandId, modelId, partId] = parts as [string, string, string, string]
-  const removeLeadingZeros = (part: string): string => part.replace(/^0+/, '') || '0'
+  const removeLeadingZeros = (value: string): string => value.replace(/^0+(?=\d)/, '')
 
   return {
-    date: removeLeadingZeros(date),
+    date,
     brandId: removeLeadingZeros(brandId),
     modelId: removeLeadingZeros(modelId),
     partId: removeLeadingZeros(partId),
