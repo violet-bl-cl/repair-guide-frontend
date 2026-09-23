@@ -239,6 +239,7 @@ async function updateQuantity(): Promise<void> {
   align-items: center;
   gap: 8px;
   margin-top: 12px;
+  flex-direction: column;
 }
 
 .quantity-controls span {
