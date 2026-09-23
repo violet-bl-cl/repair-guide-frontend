@@ -7,71 +7,10 @@ import {
   type Part,
 } from '@/api/partPriceApi'
 import QRScanner, { type ScannedCode } from '@/components/QRScanner.vue'
+import { appleModelNames } from '@/constants/appleModel'
+import { brandNames } from '@/constants/brand'
+import { partTypes } from '@/constants/parts'
 import { computed, ref } from 'vue'
-
-const brandNames: Record<number, string> = {
-  1: 'Apple',
-  2: 'Samsung',
-  3: 'Oppo',
-  4: 'Huawei',
-  5: 'Nokia',
-}
-
-const appleModelNames: Record<number, string> = {
-  1: 'iPhone 4',
-  2: 'iPhone 5',
-  3: 'iPhone 6',
-  4: 'iPhone 6+',
-  5: 'iPhone 6S+',
-  6: 'iPhone 7',
-  7: 'iPhone 7+',
-  8: 'iPhone 8',
-  9: 'iPhone 9',
-  10: 'iPhone SE (1st)',
-  11: 'iPhone SE (2nd)',
-  12: 'iPhone X',
-  13: 'iPhone XR',
-  14: 'iPhone XS',
-  15: 'iPhone XS Max',
-  16: 'iPhone 11',
-  17: 'iPhone 11 Pro',
-  18: 'iPhone 11 Pro Max',
-  19: 'iPhone 12',
-  20: 'iPhone 12 Mini',
-  21: 'iPhone 12 Pro',
-  22: 'iPhone 12 Pro Max',
-  23: 'iPhone 13',
-  24: 'iPhone 13 Mini',
-  25: 'iPhone 13 Pro',
-  26: 'iPhone 13 Pro Max',
-  27: 'iPhone 14',
-  28: 'iPhone 14 Pro',
-  29: 'iPhone 14 Pro Max',
-  30: 'iPhone 14+',
-  31: 'iPhone 15',
-  32: 'iPhone 15 Pro',
-  33: 'iPhone 15 Pro Max',
-  34: 'iPhone 15+',
-  35: 'iPhone 16',
-  36: 'iPhone 16 Pro',
-  37: 'iPhone 16 Pro Max',
-  38: 'iPhone 16+',
-  39: 'iPhone 17',
-  40: 'iPhone 17 Air',
-  41: 'iPhone 17 Pro',
-  42: 'iPhone 17 Pro Max',
-  43: 'iPhone 6s',
-}
-
-const partNames: Record<number, string> = {
-  1: 'Screen',
-  2: 'Battery',
-  3: 'Back Glass',
-  4: 'Charging Port',
-  5: 'Front Camera',
-  6: 'Back Camera',
-  7: 'Motherboard',
-}
 
 const scannedPart = ref<Part | null>(null)
 const scannedCode = ref<ScannedCode | null>(null)
@@ -104,7 +43,7 @@ async function handleScan(_value: string, code: ScannedCode): Promise<void> {
     identifiers.brandId === 1
       ? (appleModelNames[identifiers.modelId] ?? `Model ${identifiers.modelId}`)
       : `Model ${identifiers.modelId}`
-  const partType = partNames[identifiers.partId] ?? `Part ${identifiers.partId}`
+  const partType = partTypes[identifiers.partId] ?? `Part ${identifiers.partId}`
 
   try {
     const existingPart = await getPartByIdentifiers(
@@ -117,6 +56,7 @@ async function handleScan(_value: string, code: ScannedCode): Promise<void> {
       scannedPart.value = existingPart
       resultMessage.value = 'Part found. Update its quantity below.'
     } else {
+      //add new input field for the apple and brand, description
       scannedPart.value = await createPart({
         year: code.date,
         ...identifiers,
@@ -125,6 +65,7 @@ async function handleScan(_value: string, code: ScannedCode): Promise<void> {
         name: `${brand} ${model} ${partType}`,
         partType,
         quantity: 1,
+        description: '',
       })
       resultMessage.value = 'New part created with quantity 1.'
     }
