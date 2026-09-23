@@ -9,11 +9,13 @@ const userInputs = ref<{
   part: {
     model: string
     description: string
+    name: string
   }
 }>({
   part: {
     model: '',
     description: '',
+    name: '',
   },
 })
 const isCreated = ref(false)
@@ -79,6 +81,7 @@ async function insertPart(): Promise<boolean> {
     const partType = partTypes[partId] ?? `Part ${partId}`
     const model = userInputs.value.part.model.trim()
     const description = userInputs.value.part.description.trim()
+    const name = userInputs.value.part.name.trim()
 
     scannedPart.value = await createPart({
       year: scannedCode.value.date,
@@ -87,7 +90,7 @@ async function insertPart(): Promise<boolean> {
       brandId,
       brand,
       model,
-      name: `${brand} ${model} ${partType}`,
+      name: `${name}`,
       partType,
       quantity: 1,
       description,
@@ -156,6 +159,15 @@ async function updateQuantity(): Promise<void> {
           >Description:
           <input
             v-model="userInputs.part.description"
+            type="text"
+            placeholder="description..."
+            class="flex flex-start p-2 mb-4"
+          />
+        </span>
+        <span
+          >Name:
+          <input
+            v-model="userInputs.part.name"
             type="text"
             placeholder="description..."
             class="flex flex-start p-2 mb-4"
