@@ -228,10 +228,12 @@ async function updateQuantity(): Promise<void> {
 
 .success {
   color: #16a34a;
+  white-space: pre-line;
 }
 
 .error {
   color: #dc2626;
+  white-space: pre-line;
 }
 
 .quantity-controls {
