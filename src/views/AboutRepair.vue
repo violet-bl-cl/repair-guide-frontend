@@ -1,10 +1,16 @@
 <script lang="ts" setup>
-import { getPartByIdentifiers, getPrice, getPrices, type PriceResult } from '@/api/partPriceApi.ts'
+import {
+  exportParts,
+  getPartByIdentifiers,
+  getPrice,
+  getPrices,
+  type PriceResult,
+} from '@/api/partPriceApi.ts'
 import { appleDevice } from '@/data/appleDevice'
 import { oppoDevice } from '@/data/oppoDevice'
 import { samsungDevice } from '@/data/samsungDevice'
 import type { DeviceModel } from '@/types/repairGuide'
-import { ScanLine, TabletSmartphone } from '@lucide/vue'
+import { FileSpreadsheet, ScanLine, TabletSmartphone } from '@lucide/vue'
 import { computed, onMounted, ref } from 'vue'
 import AppleIcon from './../components/icons/AppleIcon.vue'
 import PriceList from './../components/PriceList.vue'
@@ -72,6 +78,11 @@ const bulkUrls = ref([
 const bulkLoading = ref(false)
 const bulkError = ref<string | null>(null)
 const bulkResults = ref<PriceResult[]>([])
+const isExporting = ref(false)
+
+const exportFileName = computed(
+  () => `century-part-lists-${new Date().toISOString().slice(0, 10)}.xlsx`,
+)
 
 async function handleBulkLookup() {
   bulkLoading.value = true
@@ -84,6 +95,26 @@ async function handleBulkLookup() {
     bulkError.value = e.response?.data?.message || e.message
   } finally {
     bulkLoading.value = false
+  }
+}
+
+async function handleExport(): Promise<void> {
+  if (isExporting.value) return
+
+  isExporting.value = true
+
+  try {
+    const file = await exportParts()
+    const downloadUrl = URL.createObjectURL(file)
+    const link = document.createElement('a')
+    link.href = downloadUrl
+    link.download = exportFileName.value
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(downloadUrl)
+  } finally {
+    isExporting.value = false
   }
 }
 
@@ -115,6 +146,15 @@ onMounted(async () => {
         >
           <ScanLine :size="20" color="white" />
         </RouterLink>
+        <button
+          class="bg-[#2563eb] hover:bg-[#1d4ed8] w-10 h-10 flex justify-center rounded items-center cursor-pointer"
+          :disabled="isExporting"
+          aria-label="Export parts to Excel"
+          title="Export parts to Excel"
+          @click="handleExport"
+        >
+          <FileSpreadsheet :size="20" color="white" />
+        </button>
         <div
           :style="{ backgroundColor: tabIndex === 0 ? '#b3b3b3' : '#ffffff' }"
           class="bg-[#ffffff] hover:bg-[#4c4c4c] w-10 h-10 flex justify-center rounded items-center cursor-pointer select-none"
