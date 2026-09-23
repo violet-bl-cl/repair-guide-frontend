@@ -11,6 +11,20 @@ import { appleModelNames } from '@/constants/appleModel'
 import { brandNames } from '@/constants/brand'
 import { partTypes } from '@/constants/parts'
 import { computed, ref } from 'vue'
+// user textfields
+const userInputs = ref<{
+  part: {
+    model: string
+    description: string
+  }
+}>({
+  part: {
+    model: '',
+    description: '',
+  },
+})
+const isCreated = ref(false)
+const nextQuantity = ref(0)
 
 const scannedPart = ref<Part | null>(null)
 const scannedCode = ref<ScannedCode | null>(null)
@@ -38,7 +52,7 @@ async function handleScan(_value: string, code: ScannedCode): Promise<void> {
     brandId: Number(code.brandId),
     partId: Number(code.partId),
   }
-  const brand = brandNames[identifiers.brandId] ?? `Brand ${identifiers.brandId}`
+
   const model =
     identifiers.brandId === 1
       ? (appleModelNames[identifiers.modelId] ?? `Model ${identifiers.modelId}`)
@@ -54,20 +68,16 @@ async function handleScan(_value: string, code: ScannedCode): Promise<void> {
 
     if (existingPart) {
       scannedPart.value = existingPart
-      resultMessage.value = 'Part found. Update its quantity below.'
+      nextQuantity.value = existingPart.quantity ?? 0
+      resultMessage.value = `Name: ${scannedPart.value.name}\n Model: ${scannedPart.value.model}\n Part found. Update its quantity below.`
     } else {
+      scannedPart.value = null
+      nextQuantity.value = 0
+      userInputs.value.part.model = ''
+      userInputs.value.part.description = ''
+      isCreated.value = true
       //add new input field for the apple and brand, description
-      scannedPart.value = await createPart({
-        year: code.date,
-        ...identifiers,
-        brand,
-        model,
-        name: `${brand} ${model} ${partType}`,
-        partType,
-        quantity: 1,
-        description: '',
-      })
-      resultMessage.value = 'New part created with quantity 1.'
+      resultMessage.value = 'New part found. Update its model and description below.'
     }
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : 'Unable to save part.'
@@ -76,22 +86,61 @@ async function handleScan(_value: string, code: ScannedCode): Promise<void> {
   }
 }
 
-async function changeQuantity(amount: number): Promise<void> {
-  if (!scannedPart.value || isLoading.value) return
+async function insertPart(): Promise<boolean> {
+  if (!scannedCode.value || isLoading.value) return false
 
-  const currentQuantity = scannedPart.value.quantity ?? 0
-  const nextQuantity = Math.max(0, currentQuantity + amount)
   isLoading.value = true
   errorMessage.value = ''
 
+  try {
+    const brandId = Number.parseInt(scannedCode.value.brandId)
+    const modelId = Number.parseInt(scannedCode.value.modelId)
+    const partId = Number.parseInt(scannedCode.value.partId)
+    const brand = brandNames[brandId] ?? `Brand ${brandId}`
+    const partType = partTypes[partId] ?? `Part ${partId}`
+    const model = userInputs.value.part.model.trim()
+    const description = userInputs.value.part.description.trim()
+
+    scannedPart.value = await createPart({
+      year: scannedCode.value.date,
+      modelId,
+      partId,
+      brandId,
+      brand,
+      model,
+      name: `${brand} ${model} ${partType}`,
+      partType,
+      quantity: 1,
+      description,
+    })
+    nextQuantity.value = scannedPart.value.quantity ?? 1
+    isCreated.value = false
+    resultMessage.value = `New part created. Quantity: ${nextQuantity.value}.`
+    return true
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : 'Unable to create part.'
+    return false
+  } finally {
+    isLoading.value = false
+  }
+}
+
+async function changeQuantity(amount: number): Promise<void> {
+  if (!scannedPart.value) return
+  nextQuantity.value = Math.max(0, nextQuantity.value + amount)
+}
+async function updateQuantity(): Promise<void> {
+  if (!scannedPart.value || isLoading.value) return
+  isLoading.value = true
+  errorMessage.value = ''
   try {
     scannedPart.value = await updatePartQuantity({
       modelId: scannedPart.value.modelId,
       brandId: scannedPart.value.brandId,
       partId: scannedPart.value.partId,
-      quantity: nextQuantity,
+      quantity: nextQuantity.value,
     })
-    resultMessage.value = `Quantity saved: ${nextQuantity}.`
+    resultMessage.value = `Name: ${scannedPart.value.name}\n Model:${scannedPart.value.model}\n Quantity saved: ${nextQuantity.value}.`
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : 'Unable to update quantity.'
   } finally {
@@ -141,15 +190,39 @@ async function handleExport(): Promise<void> {
       <p v-if="resultMessage" class="success">{{ resultMessage }}</p>
       <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
 
-      <div v-if="scannedPart" class="quantity-controls">
-        <span>Quantity: {{ scannedPart.quantity ?? 0 }}</span>
-        <button
-          :disabled="isLoading || (scannedPart.quantity ?? 0) === 0"
-          @click="changeQuantity(-1)"
-        >
+      <!-- insert device scan -->
+      <div v-if="isCreated" class="quantity-controls">
+        <span
+          >Model:
+          <input
+            v-model="userInputs.part.model"
+            type="text"
+            placeholder="model..."
+            class="flex flex-start p-2 mb-4"
+        /></span>
+        <span
+          >Description:
+          <input
+            v-model="userInputs.part.description"
+            type="text"
+            placeholder="description..."
+            class="flex flex-start p-2 mb-4"
+          />
+        </span>
+        <button :disabled="isLoading" @click="insertPart" class="export-button">
+          {{ isLoading ? 'Creating...' : 'Create' }}
+        </button>
+      </div>
+
+      <div v-if="scannedPart && !isLoading" class="quantity-controls">
+        <span>Quantity: {{ nextQuantity ?? 0 }}</span>
+        <button :disabled="isLoading || nextQuantity === 0" @click="changeQuantity(-1)">
           Decrease
         </button>
         <button :disabled="isLoading" @click="changeQuantity(1)">Increase</button>
+        <button :disabled="isLoading" @click="updateQuantity()" class="export-button">
+          Update Quantity
+        </button>
       </div>
     </section>
   </div>
