@@ -5,9 +5,15 @@
       Point the camera at a code. It's read automatically and logged to the console.
     </p>
 
-    <div class="stage">
+    <div class="stage" @click="onStageTap">
       <video ref="videoEl" playsinline muted></video>
       <div class="reticle" :class="{ hit: isHit }"></div>
+      <div v-if="isScanning && focusHint" class="focus-hint">{{ focusHint }}</div>
+      <div
+        v-if="focusPoint"
+        class="focus-ring"
+        :style="{ left: focusPoint.x + '%', top: focusPoint.y + '%' }"
+      ></div>
     </div>
 
     <p class="status" :class="statusClass">{{ statusText }}</p>
@@ -34,6 +40,12 @@ const isHit = ref(false)
 const statusText = ref('Tap "Start camera" to begin.')
 const statusClass = ref<'' | 'live' | 'err'>('')
 const lastValue = ref('')
+
+// Focus UI state
+const focusHint = ref('')
+const focusPoint = ref<{ x: number; y: number } | null>(null)
+let focusPointTimeout: ReturnType<typeof setTimeout> | null = null
+
 export type ScannedCode = {
   date: string
   brandId: string
@@ -48,6 +60,16 @@ let rafId: number | null = null
 let canvas: HTMLCanvasElement | null = null
 let ctx: CanvasRenderingContext2D | null = null
 let lastHitTime = 0
+
+// Non-standard but widely supported on Chrome/Android (incl. Samsung) media-capture-image-capture types
+type ExtendedTrackCapabilities = MediaTrackCapabilities & {
+  focusMode?: string[]
+  focusDistance?: { min: number; max: number; step: number }
+}
+type ExtendedConstraintSet = MediaTrackConstraintSet & {
+  focusMode?: string
+  pointsOfInterest?: { x: number; y: number }[]
+}
 
 // Emits the scanned value to the parent component every time a NEW code is read
 const emit = defineEmits<{
@@ -74,6 +96,89 @@ function setStatus(text: string, cls: '' | 'live' | 'err' = '') {
   statusClass.value = cls
 }
 
+/**
+ * Tries to force continuous autofocus on the active video track.
+ * Many Android/Samsung cameras default to a "locked" or slow-refocus
+ * mode over getUserMedia, which makes close-up QR codes stay blurry.
+ * This applies `focusMode: 'continuous'` when the device reports support for it.
+ */
+async function enableContinuousFocus(track: MediaStreamTrack): Promise<void> {
+  const caps = track.getCapabilities?.() as ExtendedTrackCapabilities | undefined
+  if (!caps?.focusMode) {
+    focusHint.value = ''
+    return
+  }
+
+  if (caps.focusMode.includes('continuous')) {
+    try {
+      await track.applyConstraints({
+        advanced: [{ focusMode: 'continuous' } as ExtendedConstraintSet],
+      })
+      focusHint.value = ''
+      return
+    } catch (e) {
+      console.warn('Continuous focus constraint rejected:', e)
+    }
+  }
+
+  // Device can focus, but only supports single-shot / manual — offer tap-to-focus
+  if (caps.focusMode.includes('single-shot') || caps.focusMode.includes('manual')) {
+    focusHint.value = 'Blurry? Tap the video to focus'
+  } else {
+    focusHint.value = ''
+  }
+}
+
+/**
+ * Fires a one-shot focus at the tapped point, for devices (many Samsung
+ * phones included) that don't support continuous autofocus over getUserMedia.
+ */
+async function onStageTap(evt: MouseEvent): Promise<void> {
+  if (!isScanning.value || !stream) return
+  const track = stream.getVideoTracks()[0]
+  if (!track) return
+
+  const caps = track.getCapabilities?.() as ExtendedTrackCapabilities | undefined
+  const target = evt.currentTarget as HTMLElement
+  const rect = target.getBoundingClientRect()
+  const xPct = ((evt.clientX - rect.left) / rect.width) * 100
+  const yPct = ((evt.clientY - rect.top) / rect.height) * 100
+
+  focusPoint.value = { x: xPct, y: yPct }
+  if (focusPointTimeout) clearTimeout(focusPointTimeout)
+  focusPointTimeout = setTimeout(() => (focusPoint.value = null), 700)
+
+  if (!caps?.focusMode) return
+
+  const normX = (evt.clientX - rect.left) / rect.width
+  const normY = (evt.clientY - rect.top) / rect.height
+
+  try {
+    if (caps.focusMode.includes('single-shot')) {
+      await track.applyConstraints({
+        advanced: [
+          {
+            focusMode: 'single-shot',
+            pointsOfInterest: [{ x: normX, y: normY }],
+          } as ExtendedConstraintSet,
+        ],
+      })
+    } else if (caps.focusMode.includes('continuous')) {
+      // Re-nudge continuous focus toward the tapped region on devices that support it
+      await track.applyConstraints({
+        advanced: [
+          {
+            focusMode: 'continuous',
+            pointsOfInterest: [{ x: normX, y: normY }],
+          } as ExtendedConstraintSet,
+        ],
+      })
+    }
+  } catch (e) {
+    console.warn('Tap-to-focus constraint rejected:', e)
+  }
+}
+
 async function start(): Promise<void> {
   if (!navigator.mediaDevices?.getUserMedia) {
     setStatus('Camera access is not supported in this browser.', 'err')
@@ -84,7 +189,11 @@ async function start(): Promise<void> {
   try {
     setStatus('Requesting camera access…')
     stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: 'environment' } },
+      video: {
+        facingMode: { ideal: 'environment' },
+        // Ask for continuous focus up front where the browser supports it (Chrome/Android)
+        advanced: [{ focusMode: 'continuous' } as ExtendedConstraintSet],
+      } as MediaTrackConstraints,
       audio: false,
     })
     videoEl.value.srcObject = stream
@@ -92,6 +201,9 @@ async function start(): Promise<void> {
 
     canvas = document.createElement('canvas')
     ctx = canvas.getContext('2d', { willReadFrequently: true })
+
+    const track = stream.getVideoTracks()[0]
+    if (track) await enableContinuousFocus(track)
 
     isScanning.value = true
     setStatus('Scanning…', 'live')
@@ -112,6 +224,8 @@ function stop(): void {
   }
   isScanning.value = false
   isHit.value = false
+  focusHint.value = ''
+  focusPoint.value = null
   setStatus('Camera stopped. Tap "Start camera" to resume.')
 }
 
@@ -192,6 +306,7 @@ h2 {
   background: #000;
   border-radius: 14px;
   overflow: hidden;
+  cursor: pointer;
 }
 video {
   width: 100%;
@@ -209,6 +324,40 @@ video {
 }
 .reticle.hit {
   border-color: #22c55e;
+}
+.focus-hint {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 0.78rem;
+  padding: 5px 10px;
+  border-radius: 999px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.focus-ring {
+  position: absolute;
+  width: 56px;
+  height: 56px;
+  margin-left: -28px;
+  margin-top: -28px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: focus-pulse 0.6s ease-out;
+}
+@keyframes focus-pulse {
+  0% {
+    transform: scale(1.3);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
 }
 .status {
   margin-top: 12px;
