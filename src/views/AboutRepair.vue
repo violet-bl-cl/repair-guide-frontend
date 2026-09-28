@@ -10,7 +10,7 @@ import { appleDevice } from '@/data/appleDevice'
 import { oppoDevice } from '@/data/oppoDevice'
 import { samsungDevice } from '@/data/samsungDevice'
 import type { DeviceModel } from '@/types/repairGuide'
-import { FileSpreadsheet, ScanLine, TabletSmartphone } from '@lucide/vue'
+import { DatabaseSearch, FileSpreadsheet, ScanLine, TabletSmartphone } from '@lucide/vue'
 import { computed, onMounted, ref } from 'vue'
 import AppleIcon from './../components/icons/AppleIcon.vue'
 import PriceList from './../components/PriceList.vue'
@@ -138,6 +138,14 @@ onMounted(async () => {
         />
       </div>
       <div class="flex-end flex gap-0.5">
+        <RouterLink
+          to="/part-list"
+          aria-label="Open DB Search"
+          title="Century Part List"
+          class="bg-[#16a34a] hover:bg-[#15803d] w-10 h-10 flex justify-center rounded items-center cursor-pointer"
+        >
+          <DatabaseSearch :size="20" color="white" />
+        </RouterLink>
         <RouterLink
           to="/scan"
           aria-label="Open QR scanner"

@@ -268,6 +268,8 @@ function tick(): void {
           console.log('QR code scanned:', normalizedValue)
           emit('scan', normalizedValue, parsedCode)
           setStatus('Scanned ✓', 'live')
+          // stop when its done
+          stop()
         }
       }
     } else if (now - lastHitTime > 400) {
