@@ -83,7 +83,9 @@ const columns = computed<TableColumn<Part>[]>(() => [
 
       return h('div', { class: 'flex items-center gap-1.5' }, [
         h('span', `x${qty}`),
-        qty <= 1 ? h('span', { class: 'text-red-500 font-semibold' }, '(Low Stock)') : null,
+        qty <= 1
+          ? h('span', { class: 'text-red-500 font-semibold' }, '(Low Stock)')
+          : h('span', { class: 'text-green-500 font-semibold' }, '(In Stock)'),
       ])
     },
   },
