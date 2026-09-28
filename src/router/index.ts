@@ -1,3 +1,4 @@
+import DevicePartList from '@/views/DevicePartList.vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import AboutRepair from '../views/AboutRepair.vue'
 import DeviceScanner from '../views/DeviceScan.vue'
@@ -14,6 +15,11 @@ const router = createRouter({
       path: '/scan',
       name: 'device-scanner',
       component: DeviceScanner,
+    },
+    {
+      path: '/part-list',
+      name: 'century-parts',
+      component: DevicePartList,
     },
     // {
     //   path: '/about',

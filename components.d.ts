@@ -20,6 +20,10 @@ declare module 'vue' {
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     SamsungIcon: typeof import('./src/components/icons/SamsungIcon.vue')['default']
+    UButton: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Button.vue')['default']
+    UInput: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Input.vue')['default']
+    UPagination: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Pagination.vue')['default']
+    UTable: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Table.vue')['default']
   }
 }
 
@@ -33,4 +37,8 @@ declare global {
   const RouterLink: typeof import('vue-router')['RouterLink']
   const RouterView: typeof import('vue-router')['RouterView']
   const SamsungIcon: typeof import('./src/components/icons/SamsungIcon.vue')['default']
+  const UButton: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Button.vue')['default']
+  const UInput: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Input.vue')['default']
+  const UPagination: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Pagination.vue')['default']
+  const UTable: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Table.vue')['default']
 }

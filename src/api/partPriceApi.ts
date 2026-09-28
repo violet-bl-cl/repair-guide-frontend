@@ -1,3 +1,6 @@
+import type { PaginatedResponse } from '@/types/paginatedResponse'
+import type { PartsQuery } from '@/types/partsQuery'
+import type { PartsSearchQuery } from '@/types/partsSearchQuery'
 import axios from 'axios'
 import { apiClient } from './apiClient'
 
@@ -157,5 +160,25 @@ export async function scrapeParts(url?: string): Promise<{ count: number; parts:
     params: url ? { url } : undefined,
   })
 
+  return data
+}
+
+//paginated api call
+export async function getPaginatedParts(params: PartsQuery, signal?: AbortSignal) {
+  const { data } = await apiClient.get<PaginatedResponse<Part>>('/parts/paginated', {
+    params, // axios builds ?page=1&pageSize=10 for you
+    signal, // lets us cancel stale requests
+  })
+  return data
+}
+
+export async function searchParts(
+  params: PartsSearchQuery,
+  signal?: AbortSignal,
+): Promise<PaginatedResponse<Part>> {
+  const { data } = await apiClient.get<PaginatedResponse<Part>>('/parts/search', {
+    params, // axios drops undefined values, so empty filters aren't sent
+    signal,
+  })
   return data
 }
