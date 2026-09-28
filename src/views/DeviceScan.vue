@@ -56,6 +56,7 @@ async function handleScan(_value: string, code: ScannedCode): Promise<void> {
       nextQuantity.value = 0
       userInputs.value.part.model = ''
       userInputs.value.part.description = ''
+      userInputs.value.part.name = ''
       isCreated.value = true
       //add new input field for the apple and brand, description
       resultMessage.value = 'New part found. Update its model and description below.'

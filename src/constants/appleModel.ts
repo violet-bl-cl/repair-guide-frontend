@@ -7,7 +7,7 @@ export const appleModelNames: Record<number, string> = {
   6: 'iPhone 7',
   7: 'iPhone 7+',
   8: 'iPhone 8',
-  9: 'iPhone 9',
+  9: 'iPhone 8+',
   10: 'iPhone SE (1st)',
   11: 'iPhone SE (2nd)',
   12: 'iPhone X',
