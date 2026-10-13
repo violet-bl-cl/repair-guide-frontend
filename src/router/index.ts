@@ -8,12 +8,12 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
-      path: '/about-price',
+      path: '/part-repair',
       name: 'repair',
       component: AboutRepair,
     },
     {
-      path: '/scan',
+      path: '/part-scan',
       name: 'device-scanner',
       component: DeviceScanner,
     },

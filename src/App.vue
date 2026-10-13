@@ -3,8 +3,9 @@ import { computed, ref } from 'vue'
 import { exportParts } from './api/partPriceApi'
 
 const menus = [
+  { label: '', icon: 'i-lucide-circle-dollar-sign', to: '/part-repair' },
   { label: '', icon: 'i-lucide-database-search', to: '/part-list' },
-  { label: '', icon: 'i-lucide-scan-qr-code', to: '/scan' },
+  { label: '', icon: 'i-lucide-scan-qr-code', to: '/part-scan' },
   {
     label: '',
     icon: 'i-lucide-sheet',
