@@ -202,7 +202,7 @@ watch(
 </script>
 
 <template>
-  <div class="flex flex-col h-[calc(100vh-2rem)] p-3">
+  <div class="flex flex-col p-3" :style="{ height: `calc(100vh - 63px)` }">
     <div class="flex flex-wrap items-center gap-2 m-3">
       <UInput v-model="search.brand" icon="i-lucide-search" placeholder="Brand" size="sm" />
       <UInput v-model="search.name" icon="i-lucide-search" placeholder="Name" size="sm" />

@@ -1,7 +1,5 @@
 <template lang="html">
-  <div></div>
+  <div>Hello WOrld</div>
 </template>
-<script>
-export default {}
-</script>
+<script setup lang="ts"></script>
 <style lang="scss"></style>
