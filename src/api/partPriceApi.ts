@@ -182,3 +182,11 @@ export async function searchParts(
   })
   return data
 }
+
+export async function getLowStockParts(
+  params: { page: number; pageSize: number; maxQuantity?: number },
+  signal?: AbortSignal,
+): Promise<{ data: Part[]; total: number }> {
+  const { data } = await apiClient.get('/parts/low-stock', { params, signal })
+  return data
+}
