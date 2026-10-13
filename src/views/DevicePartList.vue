@@ -218,81 +218,88 @@ watch(
     </div>
 
     <p v-if="error" class="text-red-500 text-sm">{{ error }}</p>
-
-    <UTable
-      :data="rows"
-      :columns="columns"
-      :loading="isLoading"
-      :ui="{
-        base: 'table-fixed',
-        th: 'px-2 py-1.5 text-[10.5px]',
-        td: 'px-2 py-1 text-[10.5px]',
-      }"
-      class="flex-1"
-    >
-      <template #quantity-cell="{ row }">
-        <div class="flex items-center gap-1">
-          <UButton
-            icon="i-lucide-minus"
-            color="neutral"
-            variant="outline"
-            size="2xs"
-            :ui="{ base: 'rounded-sm' }"
-            :disabled="currentQty(row.original) <= 0 || savingKey === keyOf(row.original)"
-            @click="changeQty(row.original, -1)"
-          />
-          <span class="min-w-6 text-center">{{ currentQty(row.original) }}</span>
-          <UButton
-            icon="i-lucide-plus"
-            color="neutral"
-            variant="outline"
-            size="2xs"
-            :ui="{ base: 'rounded-sm' }"
-            :disabled="savingKey === keyOf(row.original)"
-            @click="changeQty(row.original, 1)"
-          />
-
-          <span
-            class="font-semibold"
-            :class="currentQty(row.original) <= 1 ? 'text-red-500' : 'text-green-500'"
-          >
-            {{ currentQty(row.original) <= 1 ? '(Low Stock)' : '(In Stock)' }}
-          </span>
-
-          <template v-if="isDirty(row.original)">
+    <div class="relative flex-1 min-h-0">
+      <UTable
+        :data="rows"
+        :columns="columns"
+        :loading="isLoading"
+        :ui="{
+          base: 'table-fixed',
+          th: 'px-2 py-1.5 text-[10.5px]',
+          td: 'px-2 py-1 text-[10.5px]',
+        }"
+        class="flex-1"
+      >
+        <template #quantity-cell="{ row }">
+          <div class="flex items-center gap-1">
             <UButton
-              label="Confirm"
+              icon="i-lucide-minus"
+              color="neutral"
+              variant="outline"
               size="2xs"
               :ui="{ base: 'rounded-sm' }"
-              :loading="savingKey === keyOf(row.original)"
-              @click="confirmQty(row.original)"
+              :disabled="currentQty(row.original) <= 0 || savingKey === keyOf(row.original)"
+              @click="changeQty(row.original, -1)"
             />
+            <span class="min-w-6 text-center">{{ currentQty(row.original) }}</span>
             <UButton
-              icon="i-lucide-x"
+              icon="i-lucide-plus"
               color="neutral"
-              variant="ghost"
+              variant="outline"
               size="2xs"
-              aria-label="Cancel"
               :ui="{ base: 'rounded-sm' }"
               :disabled="savingKey === keyOf(row.original)"
-              @click="cancelEdit(row.original)"
+              @click="changeQty(row.original, 1)"
             />
-          </template>
-        </div>
-      </template>
 
-      <template #print-label-cell="{ row }">
-        <UButton
-          icon="i-lucide-printer"
-          color="neutral"
-          variant="outline"
-          size="xs"
-          aria-label="Print label"
-          @click="printLabel(row.original)"
-        />
-      </template>
-    </UTable>
+            <span
+              class="font-semibold"
+              :class="currentQty(row.original) <= 1 ? 'text-red-500' : 'text-green-500'"
+            >
+              {{ currentQty(row.original) <= 1 ? '(Low Stock)' : '(In Stock)' }}
+            </span>
 
+            <template v-if="isDirty(row.original)">
+              <UButton
+                label="Confirm"
+                size="2xs"
+                :ui="{ base: 'rounded-sm' }"
+                :loading="savingKey === keyOf(row.original)"
+                @click="confirmQty(row.original)"
+              />
+              <UButton
+                icon="i-lucide-x"
+                color="neutral"
+                variant="ghost"
+                size="2xs"
+                aria-label="Cancel"
+                :ui="{ base: 'rounded-sm' }"
+                :disabled="savingKey === keyOf(row.original)"
+                @click="cancelEdit(row.original)"
+              />
+            </template>
+          </div>
+        </template>
+
+        <template #print-label-cell="{ row }">
+          <UButton
+            icon="i-lucide-printer"
+            color="neutral"
+            variant="outline"
+            size="xs"
+            aria-label="Print label"
+            @click="printLabel(row.original)"
+          />
+        </template>
+      </UTable>
+
+      <div
+        v-if="isLoading"
+        class="absolute inset-0 z-10 flex items-center justify-center bg-default/60"
+      >
+        <UIcon name="i-lucide-loader-circle" class="size-8 animate-spin text-primary" />
+      </div>
+    </div>
     <p v-if="isEmpty" class="text-center text-sm text-muted py-4">
       {{ hasSearch ? 'No parts match your search.' : 'No parts found.' }}
     </p>
