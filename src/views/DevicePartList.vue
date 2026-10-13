@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { searchParts, type Part } from '@/api/partPriceApi'
+import LabelPrintPopUp from '@/components/LabelPrintPopUp.vue'
 import type { TableColumn } from '@nuxt/ui'
 import axios from 'axios'
 import { computed, h, onBeforeUnmount, ref, shallowRef, watch } from 'vue'
-
+import { updatePartQuantity } from '@/api/partPriceApi'
+import { useToast } from '@nuxt/ui/runtime/composables/useToast.js'
 type PartsResponse = { data: Part[]; total: number }
 
 // --- source state ---
@@ -11,9 +13,63 @@ const response = shallowRef<PartsResponse | null>(null)
 const rows = ref<Part[]>([])
 const total = ref(0)
 const page = ref(1)
-const pageSize = ref(10)
+const pageSize = ref(30)
 const isLoading = ref(false)
 const error = ref<string | null>(null)
+//popup status
+const slideOverOpen = ref(false)
+const selectedPart = ref<Part | null>(null)
+
+function printLabel(part: Part) {
+  selectedPart.value = part
+  slideOverOpen.value = true
+}
+//
+const toast = useToast()
+
+// edited quantities, keyed by part id. A row is "modified" only if it has an entry here.
+const edits = ref<Record<string | number, number>>({})
+const savingKey = ref<string | number | null>(null)
+const keyOf = (p: Part) => `${p.brandId}-${p.modelId}-${p.partId}`
+const currentQty = (p: Part) => edits.value[p.id] ?? p.quantity ?? 0
+const isDirty = (p: Part) =>
+  edits.value[p.id] !== undefined && edits.value[p.id] !== (p.quantity ?? 0)
+
+function changeQty(p: Part, delta: number) {
+  const next = Math.max(0, currentQty(p) + delta)
+  if (next === (p.quantity ?? 0)) {
+    delete edits.value[p.id] // back to the original value, so hide Confirm
+  } else {
+    edits.value[p.id] = next
+  }
+}
+
+function cancelEdit(p: Part) {
+  delete edits.value[p.id]
+}
+
+async function confirmQty(p: Part) {
+  const newQty = edits.value[p.id]
+  if (newQty === undefined) return
+
+  savingKey.value = p.id
+  try {
+    await updatePartQuantity({
+      partId: p.partId,
+      quantity: newQty,
+      modelId: p.modelId,
+      brandId: p.brandId,
+    })
+    // update the table row locally and clear the edit
+    rows.value = rows.value.map((r) => (r.id === p.id ? { ...r, quantity: newQty } : r))
+    delete edits.value[p.id]
+    toast.add({ title: 'Quantity updated', color: 'success' })
+  } catch (e) {
+    toast.add({ title: 'Failed to update quantity', color: 'error' })
+  } finally {
+    savingKey.value = null
+  }
+}
 
 // --- search state ---
 // `search` is bound to the inputs and changes on every keystroke.
@@ -45,7 +101,6 @@ function clearSearch() {
 }
 
 const hasSearch = computed(() => Object.values(search.value).some((v) => v.trim() !== ''))
-
 // --- derived state ---
 const params = computed(() => ({
   page: page.value,
@@ -66,13 +121,12 @@ const pad = (n: number | string) => String(n).padStart(3, '0')
 const columns = computed<TableColumn<Part>[]>(() => [
   {
     id: 'code',
-    header: 'Qr-Code',
+    header: 'Barcode',
     accessorFn: (row) => `${row.year}-${pad(row.brandId)}-${pad(row.modelId)}-${pad(row.partId)}`,
   },
-  { accessorKey: 'id', header: 'Product Id' },
+  // { accessorKey: 'id', header: 'Product ID' },
   { accessorKey: 'brand', header: 'Brand' },
   { accessorKey: 'name', header: 'Name' },
-  { accessorKey: 'model', header: 'Model Number' },
   { accessorKey: 'partType', header: 'Part Name' },
   {
     id: 'quantity', // use id (not accessorKey) when accessorFn is used
@@ -89,6 +143,7 @@ const columns = computed<TableColumn<Part>[]>(() => [
       ])
     },
   },
+  { accessorKey: 'model', header: 'Model Number' },
   {
     accessorKey: 'description',
     header: 'Detail',
@@ -96,7 +151,7 @@ const columns = computed<TableColumn<Part>[]>(() => [
   },
   {
     id: 'print-label', // not a Part field, so it needs an id instead of accessorKey
-    header: 'Label Print (not ready)',
+    header: 'Print',
   },
 ])
 
@@ -147,48 +202,113 @@ watch(
 </script>
 
 <template>
-  <div class="flex flex-wrap items-center gap-2 mb-3">
-    <UInput v-model="search.brand" icon="i-lucide-search" placeholder="Brand" size="sm" />
-    <UInput v-model="search.name" icon="i-lucide-search" placeholder="Name" size="sm" />
-    <UInput v-model="search.model" icon="i-lucide-search" placeholder="Model number" size="sm" />
-    <UButton
-      v-if="hasSearch"
-      label="Clear"
-      color="neutral"
-      variant="ghost"
-      size="sm"
-      @click="clearSearch"
-    />
+  <div class="flex flex-col h-[calc(100vh-2rem)] p-3">
+    <div class="flex flex-wrap items-center gap-2 m-3">
+      <UInput v-model="search.brand" icon="i-lucide-search" placeholder="Brand" size="sm" />
+      <UInput v-model="search.name" icon="i-lucide-search" placeholder="Name" size="sm" />
+      <UInput v-model="search.model" icon="i-lucide-search" placeholder="Model number" size="sm" />
+      <UButton
+        v-if="hasSearch"
+        label="Clear"
+        color="neutral"
+        variant="ghost"
+        size="sm"
+        @click="clearSearch"
+      />
+    </div>
+
+    <p v-if="error" class="text-red-500 text-sm">{{ error }}</p>
+
+    <UTable
+      :data="rows"
+      :columns="columns"
+      :loading="isLoading"
+      :ui="{
+        base: 'table-fixed',
+        th: 'px-2 py-1.5 text-[10.5px]',
+        td: 'px-2 py-1 text-[10.5px]',
+      }"
+      class="flex-1"
+    >
+      <template #quantity-cell="{ row }">
+        <div class="flex items-center gap-1">
+          <UButton
+            icon="i-lucide-minus"
+            color="neutral"
+            variant="outline"
+            size="2xs"
+            :ui="{ base: 'rounded-sm' }"
+            :disabled="currentQty(row.original) <= 0 || savingKey === keyOf(row.original)"
+            @click="changeQty(row.original, -1)"
+          />
+          <span class="min-w-6 text-center">{{ currentQty(row.original) }}</span>
+          <UButton
+            icon="i-lucide-plus"
+            color="neutral"
+            variant="outline"
+            size="2xs"
+            :ui="{ base: 'rounded-sm' }"
+            :disabled="savingKey === keyOf(row.original)"
+            @click="changeQty(row.original, 1)"
+          />
+
+          <span
+            class="font-semibold"
+            :class="currentQty(row.original) <= 1 ? 'text-red-500' : 'text-green-500'"
+          >
+            {{ currentQty(row.original) <= 1 ? '(Low Stock)' : '(In Stock)' }}
+          </span>
+
+          <template v-if="isDirty(row.original)">
+            <UButton
+              label="Confirm"
+              size="2xs"
+              :ui="{ base: 'rounded-sm' }"
+              :loading="savingKey === keyOf(row.original)"
+              @click="confirmQty(row.original)"
+            />
+            <UButton
+              icon="i-lucide-x"
+              color="neutral"
+              variant="ghost"
+              size="2xs"
+              aria-label="Cancel"
+              :ui="{ base: 'rounded-sm' }"
+              :disabled="savingKey === keyOf(row.original)"
+              @click="cancelEdit(row.original)"
+            />
+          </template>
+        </div>
+      </template>
+
+      <template #print-label-cell="{ row }">
+        <UButton
+          icon="i-lucide-printer"
+          color="neutral"
+          variant="outline"
+          size="xs"
+          aria-label="Print label"
+          @click="printLabel(row.original)"
+        />
+      </template>
+    </UTable>
+
+    <p v-if="isEmpty" class="text-center text-sm text-muted py-4">
+      {{ hasSearch ? 'No parts match your search.' : 'No parts found.' }}
+    </p>
+
+    <div class="flex items-center justify-between px-2 py-3 border-t border-default">
+      <span class="text-sm text-muted">
+        Showing {{ rangeStart }}-{{ rangeEnd }} of {{ total }} (page {{ page }} of {{ totalPages }})
+      </span>
+
+      <UPagination
+        v-model:page="page"
+        active-color="neutral"
+        :items-per-page="pageSize"
+        :total="total"
+      />
+    </div>
   </div>
-
-  <p v-if="error" class="text-red-500 text-sm">{{ error }}</p>
-
-  <UTable
-    :data="rows"
-    :columns="columns"
-    :loading="isLoading"
-    :ui="{
-      base: 'table-fixed',
-      th: 'text-[10.5px]',
-      td: 'text-[10.5px]',
-    }"
-    class="flex-1"
-  />
-
-  <p v-if="isEmpty" class="text-center text-sm text-muted py-4">
-    {{ hasSearch ? 'No parts match your search.' : 'No parts found.' }}
-  </p>
-
-  <div class="flex items-center justify-between px-2 py-3">
-    <span class="text-sm text-muted">
-      Showing {{ rangeStart }}-{{ rangeEnd }} of {{ total }} (page {{ page }} of {{ totalPages }})
-    </span>
-
-    <UPagination
-      v-model:page="page"
-      active-color="neutral"
-      :items-per-page="pageSize"
-      :total="total"
-    />
-  </div>
+  <LabelPrintPopUp v-model:open="slideOverOpen" :current-part="selectedPart" />
 </template>

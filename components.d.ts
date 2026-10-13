@@ -14,6 +14,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     AppleIcon: typeof import('./src/components/icons/AppleIcon.vue')['default']
     CenturyIcon: typeof import('./src/components/icons/CenturyIcon.vue')['default']
+    LabelPrintPopUp: typeof import('./src/components/LabelPrintPopUp.vue')['default']
     OppoIcon: typeof import('./src/components/icons/OppoIcon.vue')['default']
     PriceList: typeof import('./src/components/PriceList.vue')['default']
     QRScanner: typeof import('./src/components/QRScanner.vue')['default']
@@ -21,8 +22,11 @@ declare module 'vue' {
     RouterView: typeof import('vue-router')['RouterView']
     SamsungIcon: typeof import('./src/components/icons/SamsungIcon.vue')['default']
     UButton: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Button.vue')['default']
+    UFormField: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/FormField.vue')['default']
     UInput: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Input.vue')['default']
+    UInputNumber: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/InputNumber.vue')['default']
     UPagination: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Pagination.vue')['default']
+    USlideover: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Slideover.vue')['default']
     UTable: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Table.vue')['default']
   }
 }
@@ -31,6 +35,7 @@ declare module 'vue' {
 declare global {
   const AppleIcon: typeof import('./src/components/icons/AppleIcon.vue')['default']
   const CenturyIcon: typeof import('./src/components/icons/CenturyIcon.vue')['default']
+  const LabelPrintPopUp: typeof import('./src/components/LabelPrintPopUp.vue')['default']
   const OppoIcon: typeof import('./src/components/icons/OppoIcon.vue')['default']
   const PriceList: typeof import('./src/components/PriceList.vue')['default']
   const QRScanner: typeof import('./src/components/QRScanner.vue')['default']
@@ -38,7 +43,10 @@ declare global {
   const RouterView: typeof import('vue-router')['RouterView']
   const SamsungIcon: typeof import('./src/components/icons/SamsungIcon.vue')['default']
   const UButton: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Button.vue')['default']
+  const UFormField: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/FormField.vue')['default']
   const UInput: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Input.vue')['default']
+  const UInputNumber: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/InputNumber.vue')['default']
   const UPagination: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Pagination.vue')['default']
+  const USlideover: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Slideover.vue')['default']
   const UTable: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Table.vue')['default']
 }
