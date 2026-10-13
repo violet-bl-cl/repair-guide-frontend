@@ -13,7 +13,7 @@ const response = shallowRef<PartsResponse | null>(null)
 const rows = ref<Part[]>([])
 const total = ref(0)
 const page = ref(1)
-const pageSize = ref(30)
+const pageSize = ref(25)
 const isLoading = ref(false)
 const error = ref<string | null>(null)
 //popup status
@@ -202,7 +202,7 @@ watch(
 </script>
 
 <template>
-  <div class="flex flex-col p-3" :style="{ height: `calc(100vh - 63px)` }">
+  <div class="flex flex-col p-3" :style="{ height: `calc(100% - 63px)` }">
     <div class="flex flex-wrap items-center gap-2 m-3">
       <UInput v-model="search.brand" icon="i-lucide-search" placeholder="Brand" size="sm" />
       <UInput v-model="search.name" icon="i-lucide-search" placeholder="Name" size="sm" />
@@ -224,7 +224,9 @@ watch(
         :columns="columns"
         :loading="isLoading"
         :ui="{
+          root: 'h-full overflow-auto',
           base: 'table-fixed',
+          thead: 'sticky top-0 z-10 bg-default',
           th: 'px-2 py-1.5 text-[10.5px]',
           td: 'px-2 py-1 text-[10.5px]',
         }"

@@ -4,6 +4,7 @@ import { exportParts } from './api/partPriceApi'
 
 const menus = [
   { label: '', icon: 'i-lucide-circle-dollar-sign', to: '/part-repair' },
+  { label: '', icon: 'i-lucide-users-round', to: '/customer-list' },
   { label: '', icon: 'i-lucide-database-search', to: '/part-list' },
   { label: '', icon: 'i-lucide-scan-qr-code', to: '/part-scan' },
   {
