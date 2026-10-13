@@ -80,10 +80,6 @@ const bulkError = ref<string | null>(null)
 const bulkResults = ref<PriceResult[]>([])
 const isExporting = ref(false)
 
-const exportFileName = computed(
-  () => `century-part-lists-${new Date().toISOString().slice(0, 10)}.xlsx`,
-)
-
 async function handleBulkLookup() {
   bulkLoading.value = true
   bulkError.value = null
@@ -98,26 +94,6 @@ async function handleBulkLookup() {
   }
 }
 
-async function handleExport(): Promise<void> {
-  if (isExporting.value) return
-
-  isExporting.value = true
-
-  try {
-    const file = await exportParts()
-    const downloadUrl = URL.createObjectURL(file)
-    const link = document.createElement('a')
-    link.href = downloadUrl
-    link.download = exportFileName.value
-    document.body.appendChild(link)
-    link.click()
-    link.remove()
-    URL.revokeObjectURL(downloadUrl)
-  } finally {
-    isExporting.value = false
-  }
-}
-
 onMounted(async () => {
   handleSingleLookup()
   handleBulkLookup()
@@ -127,7 +103,7 @@ onMounted(async () => {
 })
 </script>
 <template>
-  <div class="flex flex-col sticky repair-header top-0 z-10 w-[100%]">
+  <div class="flex flex-col sticky repair-header top-[63px] z-10 w-[100%]">
     <div class="flex justify-between top-0 z-10 bg-white p-2 repair-header">
       <div>
         <input
@@ -138,31 +114,6 @@ onMounted(async () => {
         />
       </div>
       <div class="flex-end flex gap-0.5">
-        <RouterLink
-          to="/part-list"
-          aria-label="Open DB Search"
-          title="Century Part List"
-          class="bg-[#16a34a] hover:bg-[#15803d] w-10 h-10 flex justify-center rounded items-center cursor-pointer"
-        >
-          <DatabaseSearch :size="20" color="white" />
-        </RouterLink>
-        <RouterLink
-          to="/scan"
-          aria-label="Open QR scanner"
-          title="Open QR scanner"
-          class="bg-[#16a34a] hover:bg-[#15803d] w-10 h-10 flex justify-center rounded items-center cursor-pointer"
-        >
-          <ScanLine :size="20" color="white" />
-        </RouterLink>
-        <button
-          class="bg-[#2563eb] hover:bg-[#1d4ed8] w-10 h-10 flex justify-center rounded items-center cursor-pointer"
-          :disabled="isExporting"
-          aria-label="Export parts to Excel"
-          title="Export parts to Excel"
-          @click="handleExport"
-        >
-          <FileSpreadsheet :size="20" color="white" />
-        </button>
         <div
           :style="{ backgroundColor: tabIndex === 0 ? '#b3b3b3' : '#ffffff' }"
           class="bg-[#ffffff] hover:bg-[#4c4c4c] w-10 h-10 flex justify-center rounded items-center cursor-pointer select-none"

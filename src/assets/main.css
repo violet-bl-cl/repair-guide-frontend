@@ -5,7 +5,7 @@ body {
   font-family: 'Inter', sans-serif;
   background-color: hsla(0, 0%, 100%, 1);
   color: hsla(0, 0%, 0%, 1);
-  width: 80%;
+  width: calc(100dvw - 500px);
   margin: auto;
 }
 #app {

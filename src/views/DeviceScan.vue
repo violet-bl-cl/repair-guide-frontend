@@ -149,11 +149,20 @@ async function updateQuantity(): Promise<void> {
       <!-- insert device scan -->
       <div v-if="isCreated" class="quantity-controls">
         <span
+          >Name:
+          <input
+            v-model="userInputs.part.name"
+            type="text"
+            placeholder="Product Name..."
+            class="flex flex-start p-2 mb-4"
+          />
+        </span>
+        <span
           >Model:
           <input
             v-model="userInputs.part.model"
             type="text"
-            placeholder="model..."
+            placeholder="Product Model..."
             class="flex flex-start p-2 mb-4"
         /></span>
         <span
@@ -161,16 +170,7 @@ async function updateQuantity(): Promise<void> {
           <input
             v-model="userInputs.part.description"
             type="text"
-            placeholder="description..."
-            class="flex flex-start p-2 mb-4"
-          />
-        </span>
-        <span
-          >Name:
-          <input
-            v-model="userInputs.part.name"
-            type="text"
-            placeholder="description..."
+            placeholder="Product description..."
             class="flex flex-start p-2 mb-4"
           />
         </span>

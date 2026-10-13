@@ -1,18 +1,19 @@
 import DevicePartList from '@/views/DevicePartList.vue'
 import { createRouter, createWebHistory } from 'vue-router'
-import AboutRepair from '../views/AboutRepair.vue'
+import DeviceRepair from '../views/DeviceRepair.vue'
 import DeviceScanner from '../views/DeviceScan.vue'
+import DashBoard from '@/views/DashBoard.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
-      path: '/',
+      path: '/part-repair',
       name: 'repair',
-      component: AboutRepair,
+      component: DeviceRepair,
     },
     {
-      path: '/scan',
+      path: '/part-scan',
       name: 'device-scanner',
       component: DeviceScanner,
     },
@@ -20,6 +21,11 @@ const router = createRouter({
       path: '/part-list',
       name: 'century-parts',
       component: DevicePartList,
+    },
+    {
+      path: '/',
+      name: 'main',
+      component: DashBoard,
     },
     // {
     //   path: '/about',
