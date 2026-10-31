@@ -17,15 +17,17 @@
         <li v-for="w in warnings" :key="w">{{ w }}</li>
       </ul>
 
-      <!-- <div v-if="currentPart" class="space-y-3 text-sm">
+      <div v-if="currentPart" class="space-y-3 text-sm">
         <div>Basic Information</div>
         <div><span class="text-muted">Barcode:</span> {{ barcode }}</div>
-        <div><span class="text-muted">Brand:</span> {{ currentPart.brand }}</div>
-        <div><span class="text-muted">Name:</span> {{ currentPart.name }}</div>
-        <div><span class="text-muted">Part:</span> {{ currentPart.partType }}</div>
-        <div><span class="text-muted">Model:</span> {{ currentPart.model }}</div>
-        <div><span class="text-muted">Quantity:</span> {{ `x${currentPart.quantity}` }}</div>
-      </div> -->
+        <div><span class="text-muted">Model ID:</span> {{ currentPart.modelId }}</div>
+        <div><span class="text-muted">Brand ID:</span> {{ currentPart.brandId }}</div>
+        <!-- <div><span class="text-muted">Name:</span> {{ currentPart.name }}</div> -->
+        <div><span class="text-muted">Part ID:</span> {{ currentPart.partId }}</div>
+        <div>
+          <span class="text-muted">Product Quantity:</span> {{ `x${currentPart.quantity}` }}
+        </div>
+      </div>
 
       <h1>Label printer Status</h1>
       <p class="status" :data-state="state">
@@ -34,6 +36,7 @@
         <template v-else-if="state === 'connecting'">Connecting…</template>
         <template v-else>Not connected</template>
       </p>
+
       <p class="hint">50 × 20 mm. The preview is exactly what prints.</p>
       <USeparator orientation="horizontal" class="h-12" />
       <section class="bench" aria-label="Label preview">
@@ -121,14 +124,14 @@
         <UButton
           v-if="state === 'idle' || state === 'connecting'"
           :label="`${state === 'connecting' ? 'Connecting…' : 'Connect Printer'}`"
-          icon=""
+          icon="i-lucide-printer"
           :disabled="!supported || state === 'connecting'"
           @click="connect"
         />
         <UButton
           v-else
           :label="`${state === 'printing' ? 'Printing...' : 'Print Label'}`"
-          icon=""
+          icon="i-lucide-printer"
           :disabled="state === 'printing' || !hasCode"
           @click="disconnect"
         />
