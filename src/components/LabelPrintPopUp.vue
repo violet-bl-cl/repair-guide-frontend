@@ -7,6 +7,16 @@
     description="Review the part details before printing."
   >
     <template #body>
+      <!-- Browser Support -->
+      <p v-if="!supported" class="notice error" role="alert">
+        This browser can't use Bluetooth printing. Open the page in Chrome or Edge, from https:// or
+        http://localhost. Firefox and Safari don't support Web Bluetooth. On iPhone, use the Bluefy
+        browser.
+      </p>
+      <ul v-if="warnings.length" class="notice warn">
+        <li v-for="w in warnings" :key="w">{{ w }}</li>
+      </ul>
+
       <div v-if="currentPart" class="space-y-3 text-sm">
         <div>Basic Information</div>
         <div><span class="text-muted">Barcode:</span> {{ barcode }}</div>
@@ -16,16 +26,123 @@
         <div><span class="text-muted">Model:</span> {{ currentPart.model }}</div>
         <div><span class="text-muted">Quantity:</span> {{ `x${currentPart.quantity}` }}</div>
       </div>
+
+      <h1>Label printer Status</h1>
+      <p class="status" :data-state="state">
+        <span class="dot" aria-hidden="true"></span>
+        <template v-if="state === 'connected' || state === 'printing'">Printer connected</template>
+        <template v-else-if="state === 'connecting'">Connecting…</template>
+        <template v-else>Not connected</template>
+      </p>
+
+      <section class="bench" aria-label="Label preview">
+        <div class="sticker">
+          <canvas
+            ref="preview"
+            :aria-label="`Label for ${form.model}, code ${form.code}`"
+            role="img"
+          ></canvas>
+        </div>
+        <p class="hint">50 × 20 mm. The preview is exactly what prints.</p>
+      </section>
+
+      <label>
+        <span>Name (printed at the top)</span>
+        <input v-model="form.name" autocomplete="off" />
+      </label>
+      <label>
+        <span>Model</span>
+        <input v-model="form.model" autocomplete="off" />
+      </label>
+      <label>
+        <span>Part</span>
+        <input v-model="form.part" autocomplete="off" />
+      </label>
+      <label>
+        <span>Brand</span>
+        <input v-model="form.brand" autocomplete="off" />
+      </label>
+      <label>
+        <span>Code (also the QR code)</span>
+        <input v-model="form.code" autocomplete="off" inputmode="text" />
+      </label>
+      <label>
+        <span>Footer</span>
+        <input v-model="form.footer" autocomplete="off" />
+      </label>
+
+      <details class="more">
+        <summary>Printer settings</summary>
+        <div class="row">
+          <label>
+            <span>Bytes per write</span>
+            <input v-model.number="form.chunk" type="number" min="20" max="512" step="10" />
+          </label>
+        </div>
+        <p class="hint">Lower this to 20 if the printout is garbled or missing parts.</p>
+        <div class="row">
+          <label>
+            <span>Text size (dots)</span>
+            <input v-model.number="form.textSize" type="number" :min="MIN_TEXT" :max="MAX_TEXT" />
+          </label>
+        </div>
+        <div class="row">
+          <label>
+            <span>Text Weight</span>
+            <input v-model.number="form.textWeight" type="number" :min="MIN_TEXT" :max="MAX_TEXT" />
+          </label>
+        </div>
+        <label class="check">
+          <input v-model="form.invert" type="checkbox" />
+          <span>Invert the image (use if the label prints white on black)</span>
+        </label>
+      </details>
+
+      <div class="actions">
+        <!-- <label class="copies">
+          <span>Copies</span>
+          <input v-model.number="form.copies" type="number" min="1" max="99" />
+        </label> -->
+
+        <button
+          v-if="state === 'idle' || state === 'connecting'"
+          type="button"
+          class="primary"
+          :disabled="!supported || state === 'connecting'"
+          @click="connect"
+        >
+          {{ state === 'connecting' ? 'Connecting…' : 'Connect printer' }}
+        </button>
+        <button
+          v-else
+          type="button"
+          class="primary"
+          :disabled="state === 'printing' || !hasCode"
+          @click="print"
+        >
+          {{ state === 'printing' ? 'Printing…' : 'Print label' }}
+        </button>
+      </div>
+
+      <button v-if="state === 'connected'" type="button" class="link" @click="disconnect">
+        Disconnect
+      </button>
     </template>
 
     <template #footer>
       <div class="flex items-end justify-between gap-2 w-full">
         <UFormField label="Print count">
-          <UInputNumber v-model="printCount" :min="1" :max="100" class="w-32" />
+          <UInputNumber v-model="form.copies" :min="1" :max="100" class="w-32" />
         </UFormField>
 
         <div class="flex gap-2">
           <UButton label="Cancel" color="neutral" variant="outline" @click="open = false" />
+          <UButton
+            label="Discoonect"
+            icon="i-lucide-printer"
+            :disabled="state === 'connected'"
+            @click="disconnect"
+          />
           <UButton
             label="Print"
             icon="i-lucide-printer"
@@ -46,9 +163,6 @@ const open = defineModel<boolean>('open', { default: false })
 
 const pad = (n: number | string) => String(n).padStart(3, '0')
 
-function print() {
-  console.log('implement print here')
-}
 const barcode = computed(() =>
   props.currentPart
     ? `${props.currentPart.year}-${pad(props.currentPart.brandId)}-${pad(props.currentPart.modelId)}-${pad(props.currentPart.partId)}`
@@ -58,8 +172,113 @@ const barcode = computed(() =>
 const printCount = ref(1)
 
 // reset to 1 each time the panel opens
-watch(open, (isOpen) => {
-  if (isOpen) printCount.value = 1
+function fillForm(part: Part | null) {
+  form.name = String(part?.name ?? '')
+  form.model = String(part?.model ?? '')
+  form.part = String(part?.partType ?? '')
+  form.brand = String(part?.brand ?? '')
+  form.code = barcode.value
+}
+
+// Refill each time the panel opens or a different part is selected
+watch(
+  [() => props.currentPart, open],
+  ([part, isOpen]) => {
+    if (isOpen) {
+      fillForm(part)
+      form.copies = 1
+    }
+  },
+  { immediate: true },
+)
+
+import { onBeforeUnmount, reactive, watchEffect } from 'vue'
+import type { LabelForm } from './../hooks/labelSetup'
+import { buildLabelBytes, renderLabel, MAX_TEXT, MIN_TEXT } from './../hooks/labelRender'
+import { BlePrinter } from './../hooks/bluetoothPrinter'
+
+type State = 'idle' | 'connecting' | 'connected' | 'printing'
+
+const supported = typeof navigator !== 'undefined' && 'bluetooth' in navigator
+
+const form = reactive<LabelForm>({
+  name: `${props.currentPart?.name}`,
+  model: `${props.currentPart?.model}`,
+  part: `${props.currentPart?.partType}`,
+  brand: `${props.currentPart?.brand}`,
+  code: barcode.value,
+  footer: '21st Century Electronics Limited',
+  copies: 1,
+  chunk: 100,
+  textSize: 18,
+  textWeight: 600,
+  invert: false,
 })
+
+const printer = new BlePrinter()
+const state = ref<State>('idle')
+const message = ref('')
+const isError = ref(false)
+
+const hasCode = computed(() => form.code.trim().length > 0)
+
+// The preview is the exact picture that gets sent to the printer.
+const preview = ref<HTMLCanvasElement | null>(null)
+const warnings = ref<string[]>([])
+
+watchEffect(
+  () => {
+    if (preview.value) warnings.value = renderLabel(preview.value, form).warnings
+  },
+  { flush: 'post' },
+)
+
+function say(text: string, error = false) {
+  message.value = text
+  isError.value = error
+}
+
+async function connect() {
+  say('')
+  state.value = 'connecting'
+  try {
+    const name = await printer.connect(() => {
+      if (state.value !== 'idle')
+        say('The printer disconnected. Connect again to keep printing.', true)
+      state.value = 'idle'
+    })
+    state.value = 'connected'
+    say(`Connected to ${name}.`)
+  } catch (e) {
+    state.value = 'idle'
+    const err = e as Error
+    // NotFoundError just means the person closed the device picker.
+    if (err.name !== 'NotFoundError') say(err.message, true)
+  }
+}
+
+async function print() {
+  say('')
+  state.value = 'printing'
+  try {
+    const bytes = buildLabelBytes(form)
+    await printer.send(bytes, {
+      chunkSize: Math.max(20, Number(form.chunk) || 100),
+    })
+    say('Sent to the printer.')
+  } catch (e) {
+    say(`Printing failed: ${(e as Error).message}`, true)
+  } finally {
+    state.value = printer.connected ? 'connected' : 'idle'
+  }
+}
+
+function disconnect() {
+  state.value = 'idle'
+  printer.disconnect()
+  say('')
+}
+
+onBeforeUnmount(() => printer.disconnect())
 </script>
 <style lang="scss"></style>
