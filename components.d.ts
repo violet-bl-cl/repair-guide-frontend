@@ -33,6 +33,7 @@ declare module 'vue' {
     UMain: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Main.vue')['default']
     UNavigationMenu: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/NavigationMenu.vue')['default']
     UPagination: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Pagination.vue')['default']
+    USeparator: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Separator.vue')['default']
     USlideover: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Slideover.vue')['default']
     UTable: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Table.vue')['default']
   }
@@ -61,6 +62,7 @@ declare global {
   const UMain: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Main.vue')['default']
   const UNavigationMenu: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/NavigationMenu.vue')['default']
   const UPagination: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Pagination.vue')['default']
+  const USeparator: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Separator.vue')['default']
   const USlideover: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Slideover.vue')['default']
   const UTable: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Table.vue')['default']
 }

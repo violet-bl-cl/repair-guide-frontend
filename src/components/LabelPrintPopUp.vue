@@ -17,7 +17,7 @@
         <li v-for="w in warnings" :key="w">{{ w }}</li>
       </ul>
 
-      <div v-if="currentPart" class="space-y-3 text-sm">
+      <!-- <div v-if="currentPart" class="space-y-3 text-sm">
         <div>Basic Information</div>
         <div><span class="text-muted">Barcode:</span> {{ barcode }}</div>
         <div><span class="text-muted">Brand:</span> {{ currentPart.brand }}</div>
@@ -25,7 +25,7 @@
         <div><span class="text-muted">Part:</span> {{ currentPart.partType }}</div>
         <div><span class="text-muted">Model:</span> {{ currentPart.model }}</div>
         <div><span class="text-muted">Quantity:</span> {{ `x${currentPart.quantity}` }}</div>
-      </div>
+      </div> -->
 
       <h1>Label printer Status</h1>
       <p class="status" :data-state="state">
@@ -34,7 +34,8 @@
         <template v-else-if="state === 'connecting'">Connecting…</template>
         <template v-else>Not connected</template>
       </p>
-
+      <p class="hint">50 × 20 mm. The preview is exactly what prints.</p>
+      <USeparator orientation="horizontal" class="h-12" />
       <section class="bench" aria-label="Label preview">
         <div class="sticker">
           <canvas
@@ -43,53 +44,71 @@
             role="img"
           ></canvas>
         </div>
-        <p class="hint">50 × 20 mm. The preview is exactly what prints.</p>
       </section>
-
-      <label>
-        <span>Name (printed at the top)</span>
+      <USeparator orientation="horizontal" class="h-12" />
+      <div class="flex items-center justify-between gap-4">
+        <span>Name:</span>
         <input v-model="form.name" autocomplete="off" />
-      </label>
-      <label>
-        <span>Model</span>
+      </div>
+      <div class="flex items-center justify-between gap-4">
+        <span>Model:</span>
         <input v-model="form.model" autocomplete="off" />
-      </label>
-      <label>
-        <span>Part</span>
+      </div>
+      <div class="flex items-center justify-between gap-4">
+        <span>Part:</span>
         <input v-model="form.part" autocomplete="off" />
-      </label>
-      <label>
-        <span>Brand</span>
+      </div>
+      <div class="flex items-center justify-between gap-4">
+        <span>Brand:</span>
         <input v-model="form.brand" autocomplete="off" />
-      </label>
-      <label>
-        <span>Code (also the QR code)</span>
+      </div>
+      <div class="flex items-center justify-between gap-4">
+        <span>QR Code:</span>
         <input v-model="form.code" autocomplete="off" inputmode="text" />
-      </label>
-      <label>
-        <span>Footer</span>
+      </div>
+      <div class="flex items-center justify-between gap-4">
+        <span>Footer:</span>
         <input v-model="form.footer" autocomplete="off" />
-      </label>
-
+      </div>
+      <USeparator orientation="horizontal" class="h-6" />
       <details class="more">
         <summary>Printer settings</summary>
         <div class="row">
-          <label>
+          <label class="flex items-center justify-between gap-4">
             <span>Bytes per write</span>
-            <input v-model.number="form.chunk" type="number" min="20" max="512" step="10" />
+            <UInputNumber
+              v-model.number="form.chunk"
+              type="number"
+              min="20"
+              max="512"
+              step="10"
+              :style="{ width: '150px' }"
+            />
           </label>
         </div>
-        <p class="hint">Lower this to 20 if the printout is garbled or missing parts.</p>
+        <p class="text-muted">Lower this to 20 if the printout is garbled or missing parts.</p>
         <div class="row">
-          <label>
+          <label class="flex items-center justify-between gap-4">
             <span>Text size (dots)</span>
-            <input v-model.number="form.textSize" type="number" :min="MIN_TEXT" :max="MAX_TEXT" />
+            <UInputNumber
+              v-model.number="form.textSize"
+              type="number"
+              :min="MIN_TEXT"
+              :max="MAX_TEXT"
+              :style="{ width: '150px' }"
+            />
           </label>
         </div>
         <div class="row">
-          <label>
+          <label class="flex items-center justify-between gap-4">
             <span>Text Weight</span>
-            <input v-model.number="form.textWeight" type="number" :min="MIN_TEXT" :max="MAX_TEXT" />
+            <UInputNumber
+              v-model.number="form.textWeight"
+              type="number"
+              :min="MIN_TEXT"
+              :max="MAX_TEXT"
+              :style="{ width: '150px' }"
+            />
           </label>
         </div>
         <label class="check">
@@ -99,29 +118,20 @@
       </details>
 
       <div class="actions">
-        <!-- <label class="copies">
-          <span>Copies</span>
-          <input v-model.number="form.copies" type="number" min="1" max="99" />
-        </label> -->
-
-        <button
+        <UButton
           v-if="state === 'idle' || state === 'connecting'"
-          type="button"
-          class="primary"
+          :label="`${state === 'connecting' ? 'Connecting…' : 'Connect Printer'}`"
+          icon=""
           :disabled="!supported || state === 'connecting'"
           @click="connect"
-        >
-          {{ state === 'connecting' ? 'Connecting…' : 'Connect printer' }}
-        </button>
-        <button
+        />
+        <UButton
           v-else
-          type="button"
-          class="primary"
+          :label="`${state === 'printing' ? 'Printing...' : 'Print Label'}`"
+          icon=""
           :disabled="state === 'printing' || !hasCode"
-          @click="print"
-        >
-          {{ state === 'printing' ? 'Printing…' : 'Print label' }}
-        </button>
+          @click="disconnect"
+        />
       </div>
 
       <button v-if="state === 'connected'" type="button" class="link" @click="disconnect">
