@@ -1,16 +1,11 @@
 <script lang="ts" setup>
-import {
-  exportParts,
-  getPartByIdentifiers,
-  getPrice,
-  getPrices,
-  type PriceResult,
-} from '@/api/partPriceApi.ts'
+import { getPartByIdentifiers, getPrice, getPrices, type PriceResult } from '@/api/partPriceApi.ts'
 import { appleDevice } from '@/data/appleDevice'
 import { oppoDevice } from '@/data/oppoDevice'
 import { samsungDevice } from '@/data/samsungDevice'
 import type { DeviceModel } from '@/types/repairGuide'
-import { DatabaseSearch, FileSpreadsheet, ScanLine, TabletSmartphone } from '@lucide/vue'
+// DatabaseSearch, FileSpreadsheet, ScanLine,
+import { TabletSmartphone } from '@lucide/vue'
 import { computed, onMounted, ref } from 'vue'
 import AppleIcon from './../components/icons/AppleIcon.vue'
 import PriceList from './../components/PriceList.vue'
@@ -51,7 +46,7 @@ const setPageIndex = (value: number) => {
 const secondUrl = ref(
   'https://nzsunnyway.co.nz/product/original-lcd-screen-for-samsung-galaxy-s25-ultra-sm-s938-with-black-frame-a-grade/',
 )
-const singleUrl = ref('https://nzsunnyway.co.nz/product/lcd-screen-samsung-a30s/')
+// const singleUrl = ref('https://nzsunnyway.co.nz/product/lcd-screen-samsung-a30s/')
 const singleLoading = ref(false)
 const singleError = ref<string | null>(null)
 const singleResult = ref<PriceResult | null>(null)
@@ -78,7 +73,7 @@ const bulkUrls = ref([
 const bulkLoading = ref(false)
 const bulkError = ref<string | null>(null)
 const bulkResults = ref<PriceResult[]>([])
-const isExporting = ref(false)
+// const isExporting = ref(false)
 
 async function handleBulkLookup() {
   bulkLoading.value = true
