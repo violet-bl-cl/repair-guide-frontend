@@ -162,10 +162,10 @@ const props = defineProps<{ currentPart: Part | null }>()
 const open = defineModel<boolean>('open', { default: false })
 
 const pad = (n: number | string) => String(n).padStart(3, '0')
-
+const companyPad = (n: number | string) => String(n).padStart(2, '0')
 const barcode = computed(() =>
   props.currentPart
-    ? `${props.currentPart.year}-${pad(props.currentPart.brandId)}-${pad(props.currentPart.modelId)}-${pad(props.currentPart.partId)}`
+    ? `${props.currentPart.year}-${companyPad(props.currentPart.brandId)}-${pad(props.currentPart.modelId)}-${pad(props.currentPart.partId)}`
     : '',
 )
 

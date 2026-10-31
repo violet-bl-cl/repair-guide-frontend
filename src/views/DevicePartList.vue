@@ -117,12 +117,13 @@ const isEmpty = computed(() => !isLoading.value && !error.value && rows.value.le
 
 // padding method
 const pad = (n: number | string) => String(n).padStart(3, '0')
-
+const brandPad = (n: number | string) => String(n).padStart(2, '0')
 const columns = computed<TableColumn<Part>[]>(() => [
   {
     id: 'code',
     header: 'Barcode',
-    accessorFn: (row) => `${row.year}-${pad(row.brandId)}-${pad(row.modelId)}-${pad(row.partId)}`,
+    accessorFn: (row) =>
+      `${row.year}-${brandPad(row.brandId)}-${pad(row.modelId)}-${pad(row.partId)}`,
   },
   // { accessorKey: 'id', header: 'Product ID' },
   { accessorKey: 'brand', header: 'Brand' },
