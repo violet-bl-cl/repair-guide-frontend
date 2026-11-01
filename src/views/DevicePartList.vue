@@ -6,6 +6,7 @@ import axios from 'axios'
 import { computed, h, onBeforeUnmount, ref, shallowRef, watch } from 'vue'
 import { updatePartQuantity } from '@/api/partPriceApi'
 import { useToast } from '@nuxt/ui/runtime/composables/useToast.js'
+import AddPartPopUp from '@/components/AddPartPopUp.vue'
 type PartsResponse = { data: Part[]; total: number }
 
 // --- source state ---
@@ -18,6 +19,7 @@ const isLoading = ref(false)
 const error = ref<string | null>(null)
 //popup status
 const slideOverOpen = ref(false)
+const addSliderOverOpen = ref(false)
 const selectedPart = ref<Part | null>(null)
 
 function printLabel(part: Part) {
@@ -46,6 +48,9 @@ function changeQty(p: Part, delta: number) {
 
 function cancelEdit(p: Part) {
   delete edits.value[p.id]
+}
+function addNewPart() {
+  addSliderOverOpen.value = true
 }
 
 async function confirmQty(p: Part) {
@@ -216,6 +221,14 @@ watch(
         size="sm"
         @click="clearSearch"
       />
+      <UButton
+        label="New"
+        icon="i-lucide-plus"
+        color="neutral"
+        variant="ghost"
+        size="sm"
+        @click="addNewPart"
+      />
     </div>
 
     <p v-if="error" class="text-red-500 text-sm">{{ error }}</p>
@@ -320,5 +333,6 @@ watch(
       />
     </div>
   </div>
+  <AddPartPopUp v-model:open="addSliderOverOpen" />
   <LabelPrintPopUp v-model:open="slideOverOpen" :current-part="selectedPart" />
 </template>

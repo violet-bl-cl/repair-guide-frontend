@@ -12,6 +12,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AddPartPopUp: typeof import('./src/components/AddPartPopUp.vue')['default']
     AppleIcon: typeof import('./src/components/icons/AppleIcon.vue')['default']
     CenturyIcon: typeof import('./src/components/icons/CenturyIcon.vue')['default']
     LabelPrintPopUp: typeof import('./src/components/LabelPrintPopUp.vue')['default']
@@ -33,6 +34,8 @@ declare module 'vue' {
     UMain: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Main.vue')['default']
     UNavigationMenu: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/NavigationMenu.vue')['default']
     UPagination: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Pagination.vue')['default']
+    USelect: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Select.vue')['default']
+    USelectMenu: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/SelectMenu.vue')['default']
     USeparator: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Separator.vue')['default']
     USlideover: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Slideover.vue')['default']
     UTable: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Table.vue')['default']
@@ -41,6 +44,7 @@ declare module 'vue' {
 
 // For TSX support
 declare global {
+  const AddPartPopUp: typeof import('./src/components/AddPartPopUp.vue')['default']
   const AppleIcon: typeof import('./src/components/icons/AppleIcon.vue')['default']
   const CenturyIcon: typeof import('./src/components/icons/CenturyIcon.vue')['default']
   const LabelPrintPopUp: typeof import('./src/components/LabelPrintPopUp.vue')['default']
@@ -62,6 +66,8 @@ declare global {
   const UMain: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Main.vue')['default']
   const UNavigationMenu: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/NavigationMenu.vue')['default']
   const UPagination: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Pagination.vue')['default']
+  const USelect: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Select.vue')['default']
+  const USelectMenu: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/SelectMenu.vue')['default']
   const USeparator: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Separator.vue')['default']
   const USlideover: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Slideover.vue')['default']
   const UTable: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Table.vue')['default']

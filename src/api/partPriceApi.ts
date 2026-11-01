@@ -190,3 +190,12 @@ export async function getLowStockParts(
   const { data } = await apiClient.get('/parts/low-stock', { params, signal })
   return data
 }
+
+export async function getMaxModelId(
+  brandId: number,
+): Promise<{ brandId: number; maxModelId: number }> {
+  const { data } = await apiClient.get<{ brandId: number; maxModelId: number }>(
+    `/parts/brands/${brandId}/max-model-id`,
+  )
+  return data
+}
