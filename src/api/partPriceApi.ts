@@ -199,3 +199,14 @@ export async function getMaxModelId(
   )
   return data
 }
+
+export interface FindOrCreateResult {
+  part: Part
+  barcode: string
+  modelCreated: boolean
+}
+
+export async function findOrCreatePart(part: CreatePartInput): Promise<FindOrCreateResult> {
+  const { data } = await apiClient.post<FindOrCreateResult>('/parts/find-or-create', part)
+  return data
+}

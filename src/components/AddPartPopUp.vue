@@ -52,7 +52,7 @@
           label="Create part"
           icon="i-lucide-plus"
           :loading="creating"
-          :disabled="!brandId || !partId || creating"
+          :disabled="!brandId || !partId || !form.name.trim() || !form.model.trim() || creating"
           @click="handleCreate"
         />
       </div>
@@ -62,9 +62,10 @@
 
 <script setup lang="ts">
 import type { LabelForm } from '@/hooks/labelSetup'
-import { partTypes } from '@/constants/parts' // adjust
+import { partTypes } from '@/constants/parts'
 import { brandNames } from '@/constants/brand'
-import { createPart, getMaxModelId } from '@/api/partPriceApi'
+import { findOrCreatePart } from '@/api/partPriceApi'
+import axios from 'axios'
 import { reactive, ref, watch } from 'vue'
 import { useToast } from '@nuxt/ui/runtime/composables/useToast.js'
 
@@ -109,49 +110,47 @@ watch(open, (isOpen) => {
     form.brand = ''
     form.part = ''
     form.code = ''
+    form.copies = 1
     brandId.value = undefined
     partId.value = undefined
   }
 })
-
-const pad = (n: number, len = 3) => String(n).padStart(len, '0')
 
 async function handleCreate() {
   if (!brandId.value || !partId.value) return
 
   creating.value = true
   try {
-    // 1. highest model number used by this brand
-    const { maxModelId } = await getMaxModelId(brandId.value)
-    const modelId = maxModelId + 1
-    const year = String(new Date().getFullYear())
-
-    // 2. create the part with the next model number
-    const created = await createPart({
-      year,
+    // The server finds the existing device (same brand + name + model) and reuses its
+    // model number, or creates a new model number. modelId and year here are placeholders.
+    const res = await findOrCreatePart({
+      year: String(new Date().getFullYear()),
+      modelId: 0,
       brandId: brandId.value,
-      modelId,
       partId: partId.value,
       brand: form.brand,
-      model: form.model,
-      name: form.name,
+      model: form.model.trim(),
+      name: form.name.trim(),
       partType: form.part,
       quantity: 1,
     })
 
-    // 3. show the new barcode so it can be printed
-    form.code = `${year}-${pad(brandId.value, 2)}-${pad(modelId)}-${pad(partId.value)}`
+    form.code = res.barcode
 
     toast.add({
-      title: 'Part created',
-      description: `Barcode ${form.code}`,
+      title: res.modelCreated ? 'New model created' : 'Added to existing model',
+      description: `Barcode ${res.barcode}`,
       color: 'success',
     })
-    return created
   } catch (e) {
+    // show the server's message, e.g. "This part already exists: 2026-01-030-001"
+    const message = axios.isAxiosError(e)
+      ? (e.response?.data?.message ?? e.message)
+      : (e as Error).message
+
     toast.add({
       title: 'Could not create part',
-      description: (e as Error).message,
+      description: String(message),
       color: 'error',
     })
   } finally {

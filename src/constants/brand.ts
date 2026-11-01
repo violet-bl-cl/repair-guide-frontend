@@ -4,4 +4,5 @@ export const brandNames: Record<number, string> = {
   3: 'Oppo',
   4: 'Huawei',
   5: 'Nokia',
+  6: 'Lenovo',
 }
