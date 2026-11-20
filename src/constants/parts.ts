@@ -10,4 +10,5 @@ export const partTypes: Record<number, string> = {
   9: 'Camera Lens',
   10: 'Glass Screen',
   11: 'LCD Panel',
+  12: 'Sim Tray',
 }
